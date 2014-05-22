@@ -66,3 +66,7 @@ void draw(screen_t *target, screen_t *source) {
   }
 }
 
+void screen_clear(screen_t *screen) {
+  memset(screen->cells, ' ', screen->cols*screen->rows);
+}
+

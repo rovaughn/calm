@@ -24,7 +24,7 @@ int main(void) {
 
     switch (e.type) {
     default:
-      state_apply_event(state, &e);
+      state_apply_event(state, e);
     break;
     }
   }

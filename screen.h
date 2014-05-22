@@ -14,5 +14,6 @@ void get_screen_dimensions(int *rows, int *cols);
 void init_screen(screen_t *screen, char fill);
 void render(screen_t *screen);
 void draw(screen_t *target, screen_t *source);
+void screen_clear(screen_t *screen);
 
 #endif

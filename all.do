@@ -1,3 +1,4 @@
 #!/bin/bash -e
-redo-ifchange main.o buffer.o event.o screen.o state.o
-./cc main.o buffer.o event.o screen.o state.o -o calm
+deps="main.o buffer.o event.o screen.o state.o field.o"
+redo-ifchange $deps
+./cc $deps -o calm
