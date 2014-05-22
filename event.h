@@ -13,6 +13,7 @@ typedef struct {
   };
 } event_t;
 
+void prepare_events(void);
 event_t await_event(void);
 
 #endif

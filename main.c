@@ -12,7 +12,8 @@ int main(void) {
   state_t *state = state_new();
 
   init_screen(&screen, ' ');
-  init_screen(&realScreen, '\0'); // Filled with nulls at first, to make sure it gets overwritten.
+  init_screen(&realScreen, '\0'); // Filled with nulls at first, to make sure
+                                  // it gets overwritten.
 
   prepare_events();
 

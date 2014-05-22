@@ -4,6 +4,7 @@
 #include <termios.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <time.h>
 
 struct timespec event_sleep = { .tv_sec = 0, .tv_nsec = 16666666 }; // 1/60 second
 struct termios saved_termios;

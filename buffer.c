@@ -3,7 +3,7 @@
 #include <string.h>
 
 buffer_t new_buffer(size_t len, size_t cap) {
-  uint8_t *buf = malloc(cap * sizeof *buf);
+  uint32_t *buf = malloc(cap * sizeof *buf);
 
   buffer_t b = {
     .len = len,
@@ -21,7 +21,7 @@ void free_buffer(buffer_t *b) {
   free(b->buf);
 }
 
-void buffer_append(buffer_t *b, uint8_t i) {
+void buffer_append(buffer_t *b, uint32_t i) {
   if (b->len == b->cap) {
     b->cap = 1 + 2*b->cap;
     b->buf = realloc(b->buf, b->cap * sizeof *b->buf);
@@ -31,7 +31,7 @@ void buffer_append(buffer_t *b, uint8_t i) {
   b->len += 1;
 }
 
-void buffer_insert(buffer_t *b, uint8_t i, size_t pos) {
+void buffer_insert(buffer_t *b, uint32_t i, size_t pos) {
   if (b->len == b->cap) {
     b->cap = 1 + 2*b->cap;
     b->buf = realloc(b->buf, b->cap * sizeof *b->buf);
@@ -43,7 +43,7 @@ void buffer_insert(buffer_t *b, uint8_t i, size_t pos) {
   b->len += 1;
 }
 
-void buffer_extend(buffer_t *b, uint8_t *data, size_t len) {
+void buffer_extend(buffer_t *b, uint32_t *data, size_t len) {
   size_t needLen = b->len + len,
          newCap  = b->cap;
 

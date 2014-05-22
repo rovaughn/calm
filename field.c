@@ -37,6 +37,8 @@ void field_state_apply(field_state_t *fs, event_t e) {
   case E_END:
     fs->cursor = fs->contents.len;
   break;
+  default:
+  break;
   }
 }
 
@@ -44,6 +46,10 @@ void field_state_render(const field_state_t *fs, screen_t *screen, int x, int y)
   screen->cursorx = x + fs->cursor;
   screen->cursory = y;
 
-  memcpy(screen->cells, fs->contents.buf, fs->contents.len);
+  size_t start = y*screen->cols + x;
+  size_t i;
+  for (i = 0; i < fs->contents.len; ++i) {
+    screen->cells[start + i] = fs->contents.buf[i];
+  }
 }
 
