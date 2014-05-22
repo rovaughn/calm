@@ -1,6 +1,7 @@
 #include "buffer.h"
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 buffer_t new_buffer(size_t len, size_t cap) {
   uint32_t *buf = malloc(cap * sizeof *buf);
@@ -10,6 +11,8 @@ buffer_t new_buffer(size_t len, size_t cap) {
     .cap = cap,
     .buf = buf
   };
+
+  memset(buf, 0, len * sizeof *buf);
 
   return b;
 }
@@ -37,32 +40,15 @@ void buffer_insert(buffer_t *b, uint32_t i, size_t pos) {
     b->buf = realloc(b->buf, b->cap * sizeof *b->buf);
   }
 
-  memmove(&b->buf[pos + 1], &b->buf[pos], b->len - pos);
+  memmove(&b->buf[pos + 1], &b->buf[pos], (b->len - pos) * sizeof *b->buf);
 
   b->buf[pos] = i;
   b->len += 1;
 }
 
-void buffer_extend(buffer_t *b, uint32_t *data, size_t len) {
-  size_t needLen = b->len + len,
-         newCap  = b->cap;
-
-  while (needLen < newCap) {
-    newCap = 1 + 2*newCap;
-  }
-
-  if (newCap > b->cap) {
-    b->cap = newCap;
-    b->buf = realloc(b->buf, b->cap * sizeof *b->buf);
-  }
-
-  memcpy(&b->buf[b->len], data, len);
-  b->len = needLen;
-}
-
 void buffer_delete(buffer_t *b, size_t pos) {
   if (pos < b->len) {
-    memmove(&b->buf[pos], &b->buf[pos + 1], b->len - pos - 1);
+    memmove(&b->buf[pos], &b->buf[pos + 1], (b->len - pos - 1) * sizeof *b->buf);
     b->len -= 1;
   }
 }
