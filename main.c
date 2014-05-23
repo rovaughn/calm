@@ -4,6 +4,9 @@
 #include "event.h"
 #include "buffer.h"
 #include "state.h"
+#include <time.h>
+
+struct timespec event_sleep = { .tv_sec = 0, .tv_nsec = 16666666 }; // 1/60 second
 
 int main(void) {
   screen_t screen,
@@ -17,17 +20,18 @@ int main(void) {
 
   prepare_events();
 
+  state_render(state, &screen);
+  draw(&realScreen, &screen);
+
   while (true) {
-    state_render(state, &screen);
-    draw(&realScreen, &screen);
-
     event_t e = await_event();
-
-    switch (e.type) {
-    default:
-      state_apply_event(state, e);
-    break;
+    
+    if (state_apply_event(state, e)) {
+      state_render(state, &screen);
+      draw(&realScreen, &screen);
     }
+
+    nanosleep(&event_sleep, NULL);
   }
 
   return 0;

@@ -19,8 +19,9 @@ void get_screen_dimensions(int *rows, int *cols) {
 void init_screen(screen_t *screen, uint32_t fill) {
   get_screen_dimensions(&screen->rows, &screen->cols);
 
-  screen->cursorx = 0;
-  screen->cursory = 0;
+  screen->cursorx    = 0;
+  screen->cursory    = 0;
+  screen->showcursor = true;
 
   screen->cells = malloc(screen->rows * screen->cols * sizeof *screen->cells);
 
@@ -31,7 +32,20 @@ void init_screen(screen_t *screen, uint32_t fill) {
   screen_clear(screen, fill);
 }
 
+static const char showCursor[] = "\x1b[?25h",
+                  hideCursor[] = "\x1b[?25l";
+
 void draw(screen_t *target, screen_t *source) {
+  if (source->showcursor != target->showcursor) {
+    target->showcursor = source->showcursor;
+
+    if (source->showcursor) {
+      write(STDOUT_FILENO, showCursor, sizeof showCursor);
+    } else {
+      write(STDOUT_FILENO, hideCursor, sizeof hideCursor);
+    }
+  }
+
   int cursorAt = -1;
   char out[UTF8_LEN];
   
@@ -42,7 +56,7 @@ void draw(screen_t *target, screen_t *source) {
         int y = (i / source->cols) + 1,
             x = (i % source->cols) + 1;
 
-        printf("\033[%d;%dH", y, x);
+        printf("\x1b[%d;%dH", y, x);
         fflush(stdout);
         cursorAt = i;
       }
@@ -72,5 +86,9 @@ void screen_clear(screen_t *screen, uint32_t fill) {
   for (i = 0; i < screen->cols * screen->rows; ++i) {
     screen->cells[i] = fill;
   }
+}
+
+void screen_put(screen_t *screen, int x, int y, uint32_t c) {
+  screen->cells[y*screen->cols + x] = c;
 }
 
