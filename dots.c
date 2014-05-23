@@ -13,10 +13,10 @@ void dots_render(screen_t *screen, bool *dots, int cols, int rows, int x, int y)
       uint32_t c = 0x2800;
 
       c |= dots[(yb+0)*cols + (xb+0)] << 0;
-      c |= dots[(yb+1)*cols + (xb+0)] << 1;
-      c |= dots[(yb+2)*cols + (xb+0)] << 2;
       c |= dots[(yb+0)*cols + (xb+1)] << 3;
+      c |= dots[(yb+1)*cols + (xb+0)] << 1;
       c |= dots[(yb+1)*cols + (xb+1)] << 4;
+      c |= dots[(yb+2)*cols + (xb+0)] << 2;
       c |= dots[(yb+2)*cols + (xb+1)] << 5;
       c |= dots[(yb+3)*cols + (xb+0)] << 6;
       c |= dots[(yb+3)*cols + (xb+1)] << 7;
