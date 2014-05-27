@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <stdbool.h>
-#include "screen.h"
-#include "event.h"
-#include "buffer.h"
-#include "state.h"
+#include "../screen.h"
+#include "../event.h"
+#include "../buffer.h"
+#include "../state.h"
 #include <time.h>
 
 struct timespec event_sleep = { .tv_sec = 0, .tv_nsec = 16666666 }; // 1/60 second
