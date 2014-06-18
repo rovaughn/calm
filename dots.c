@@ -21,7 +21,7 @@ void dots_render(screen_t *screen, bool *dots, int cols, int rows, int x, int y)
       c |= dots[(yb+3)*cols + (xb+0)] << 6;
       c |= dots[(yb+3)*cols + (xb+1)] << 7;
 
-      screen_put(screen, xs + x, ys + y, c);
+      screen->cells[(ys + y)*screen->cols + (xs + x)].codes[0] = c;
     }
   }
 }

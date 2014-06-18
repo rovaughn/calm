@@ -1,4 +1,5 @@
 calm
 ====
 
-Like react.js for the terminal
+React.js for the terminal.
+

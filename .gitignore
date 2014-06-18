@@ -1,4 +1,3 @@
 *.o
 .redo
-calm
-example-*
+test

@@ -1,94 +1,104 @@
 #include "screen.h"
 #include <sys/ioctl.h>
-#include <unistd.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 #include "utf8.h"
+#include "wcwidth.h"
 
-void get_screen_dimensions(int *rows, int *cols) {
-  struct winsize w;
+void screen_init(screen_t *fake, screen_t *real) {
+  fake->cursorx    = 0;
+  fake->cursory    = 0;
+  fake->showcursor = false;
 
-  ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+  struct winsize ws;
 
-  *rows = w.ws_row;
-  *cols = w.ws_col;
-}
-
-void init_screen(screen_t *screen, uint32_t fill) {
-  get_screen_dimensions(&screen->rows, &screen->cols);
-
-  screen->cursorx    = 0;
-  screen->cursory    = 0;
-  screen->showcursor = true;
-
-  screen->cells = malloc(screen->rows * screen->cols * sizeof *screen->cells);
-
-  if (screen->cells == NULL) {
-    exit(1);
+  if (ioctl(0, TIOCGWINSZ, &ws) != 0) {
+    fake->rows = real->rows = 25;
+    fake->cols = real->rows = 80;
+  } else {
+    fake->rows = real->rows = ws.ws_row;
+    fake->cols = real->cols = ws.ws_col;
   }
 
-  screen_clear(screen, fill);
-}
+  fake->cells = calloc(fake->rows * fake->cols, sizeof *fake->cells);
+  real->cells = calloc(real->rows * real->cols, sizeof *real->cells);
 
-static const char showCursor[] = "\x1b[?25h",
-                  hideCursor[] = "\x1b[?25l";
-
-void draw(screen_t *target, screen_t *source) {
-  if (source->showcursor != target->showcursor) {
-    target->showcursor = source->showcursor;
-
-    if (source->showcursor) {
-      write(STDOUT_FILENO, showCursor, sizeof showCursor);
-    } else {
-      write(STDOUT_FILENO, hideCursor, sizeof hideCursor);
-    }
-  }
-
-  int cursorAt = -1;
-  char out[UTF8_LEN];
-  
   int i;
-  for (i = 0; i < source->rows*source->cols; ++i) {
-    if (source->cells[i] != target->cells[i]) {
-      if (cursorAt != i) {
-        int y = (i / source->cols) + 1,
-            x = (i % source->cols) + 1;
+  for (i = 0; i < fake->rows * fake->cols; ++i) {
+    fake->cells[i].codes[0] = ' ';
+    fake->cells[i].style    = DEFAULT_STYLE;
+  }
+}
 
-        printf("\x1b[%d;%dH", y, x);
-        fflush(stdout);
-        cursorAt = i;
+// http://en.wikipedia.org/wiki/ANSI_escape_code#CSI_codes
+void screen_flush(screen_t **fakeptr, screen_t **realptr) {
+  screen_t *fake = *fakeptr,
+           *real = *realptr;
+
+  if (real->showcursor && !fake->showcursor) {
+    printf("\e[?25h");
+  } else if (!real->showcursor && fake->showcursor) {
+    printf("\e[?25l");
+  }
+
+  int currentx = -1,
+      currenty = -1;
+
+  int x, y;
+  for (y = 0; y < fake->rows; ++y) {
+    for (x = 0; x < fake->cols; ++x) {
+      int i = y*fake->cols + x;
+
+      uint16_t style = fake->cells[i].style;
+
+      if (style != real->cells[i].style) {
+        uint8_t colors  = style & 0xff;
+        //        effects = style >> 8;
+
+        if (colors & BRIGHT) {
+          printf("\e[%dm", 90 + (colors & 0x7));
+        } else {
+          printf("\e[%dm", 30 + (colors & 0x7));
+        }
+
+        if (colors & BACK_BRIGHT) {
+          printf("\e[%dm", 100 + ((colors >> 4) & 0x7));
+        } else {
+          printf("\e[%dm", 100 + ((colors >> 4) & 0x7));
+        }
       }
-     
-      target->cells[i] = source->cells[i];
 
-      int len = pututf8(out, source->cells[i]);
-      //puts(out);
-      write(STDOUT_FILENO, out, len);
-      cursorAt += 1;
+      if (memcmp(fake->cells[i].codes, real->cells[i].codes, NCODES) == 0) {
+        continue;
+      }
+
+      if (x != currentx || y != currenty) {
+        printf("\e[%d;%dH", y + 1, x + 1);
+        currentx = x;
+        currenty = y;
+      }
+
+      wchar_t *codes    = fake->cells[i].codes;
+      char     codestr  [NCODES*UTF8_LEN + 1];
+      int      codecols = mk_wcswidth(codes, NCODES),
+               n        = putsutf8(codestr, fake->cells[i].codes, NCODES);
+
+      codestr[n] = '\0';
+
+      printf("%s", codestr);
+      currentx += codecols;
+
+      if (currentx >= fake->cols) {
+        currentx  = 0;
+        currenty += 1;
+      }
     }
   }
 
-  int cursorPos = source->cursory*source->cols + source->cursorx;
+  screen_t *swap = *realptr;
 
-  target->cursorx = source->cursorx;
-  target->cursory = source->cursory;
-
-  if (cursorAt != cursorPos) {
-    printf("\033[%d;%dH", source->cursory + 1, source->cursorx + 1);
-    fflush(stdout);
-  }
-}
-
-void screen_clear(screen_t *screen, uint32_t fill) {
-  int i;
-  for (i = 0; i < screen->cols * screen->rows; ++i) {
-    screen->cells[i] = fill;
-  }
-}
-
-void screen_put(screen_t *screen, int x, int y, uint32_t c) {
-  screen->cells[y*screen->cols + x] = c;
+  *realptr = *fakeptr;
+  *fakeptr = swap;
 }
 

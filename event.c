@@ -4,28 +4,48 @@
 #include <termios.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <signal.h>
+#include <string.h>
 
-struct termios saved_termios;
+static struct termios saved_termios;
+static int            caught_signal = 0;
+
+static void handle_signal(int signum) {
+  caught_signal = signum;
+}
 
 void prepare_events(void) {
   struct termios work;
 
   tcgetattr(STDIN_FILENO, &saved_termios);
-  work = saved_termios;
+
+  memcpy(&work, &saved_termios, sizeof work);
+
   work.c_lflag &= (~ECHO & ~ICANON);
   work.c_cc[VMIN] = 0;
   work.c_cc[VTIME] = 0;
   tcsetattr(STDIN_FILENO, TCSANOW, &work);
+
+  signal(SIGINT, handle_signal);
 }
 
-int cleanup_events(void) {
-  return tcsetattr(STDIN_FILENO, TCSANOW, &saved_termios);
+void cleanup_events(void) {
+  const char showCursor[] = "\x1b[?25h";
+
+  write(STDOUT_FILENO, showCursor, sizeof showCursor);
+  tcsetattr(STDIN_FILENO, TCSANOW, &saved_termios);
 }
 
 event_t await_event(void) {
   event_t e;
 
   e.type = E_NULL;
+
+  if (caught_signal != 0) {
+    e.type   = E_SIG;
+    e.signum = caught_signal;
+    return e;
+  }
 
   char cbuf[4] = {0};
 

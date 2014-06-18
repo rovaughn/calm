@@ -2,9 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-int pututf8(char *out, uint32_t c) {
-  memset(out, 0, UTF8_LEN);
-
+int pututf8(char *out, wchar_t c) {
   if (c <= 0x7f) {
     out[0] = c;
     return 1;
@@ -41,5 +39,16 @@ int pututf8(char *out, uint32_t c) {
   } else {
     return 0;
   }
+}
+
+size_t putsutf8(char *out, wchar_t *wcs, size_t len) {
+  size_t n = 0;
+
+  size_t i;
+  for (i = 0; i < len; ++i) {
+    n += pututf8(&out[n], wcs[i]);
+  }
+
+  return n;
 }
 
