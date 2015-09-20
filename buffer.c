@@ -31,15 +31,12 @@ void *buf_reserve(buffer_t *buf, size_t n) {
     return &buf->data[old_used];
 }
 
-void buf_push(buffer_t *buf, void *data, size_t n) {
-    void *dest = buf_reserve(buf, n);
-    memcpy(dest, data, n);
+void buf_push(buffer_t *buf, const void *data, size_t n) {
+    memcpy(buf_reserve(buf, n), data, n);
 }
 
 void buf_push_str(buffer_t *buf, const char *str) {
-    size_t n = strlen(str);
-    void *dest = buf_reserve(buf, n);
-    memcpy(dest, str, n);
+    buf_push(buf, str, strlen(str));
 }
 
 static unsigned count_digits(unsigned n) {

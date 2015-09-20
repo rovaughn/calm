@@ -13,7 +13,7 @@ typedef struct {
 buffer_t buf_new(size_t capacity);
 void buf_free(buffer_t *buf);
 
-void buf_push(buffer_t *buf, void *data, size_t n);
+void buf_push(buffer_t *buf, const void *data, size_t n);
 void buf_push_str(buffer_t *buf, const char *str);
 void buf_push_int(buffer_t *buf, unsigned i);
 
