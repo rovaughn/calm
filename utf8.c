@@ -45,7 +45,7 @@ size_t putsutf8(char *out, wchar_t *wcs, size_t len) {
   size_t n = 0;
 
   size_t i;
-  for (i = 0; i < len; ++i) {
+  for (i = 0; i < len && wcs[i] != '\0'; ++i) {
     n += pututf8(&out[n], wcs[i]);
   }
 

@@ -3,42 +3,42 @@
 #include <stdbool.h>
 #include <wchar.h>
 #include <stdint.h>
+#include "buffer.h"
 
 #define NCODES 2
 
-#define DEFAULT_STYLE (BACK_BLACK | WHITE)
-
-typedef enum {
-  BLACK       = 0x00, RED     , GREEN     , YELLOW     , BLUE     , MAGENTA     , CYAN     , WHITE,
-  BRIGHT      = 0x08,
-  BACK_BLACK  = 0x10, BACK_RED, BACK_GREEN, BACK_YELLOW, BACK_BLUE, BACK_MAGENTA, BACK_CYAN, BACK_WHITE,
-  BACK_BRIGHT = 0x80
-} color_t;
-
-enum {
-  BOLD          = 1 << 0,
-  DIM           = 1 << 1,
-  UNDERLINE     = 1 << 2,
-  INVERSE       = 1 << 3,
-  INVISIBLE     = 1 << 4,
-  STRIKETHROUGH = 1 << 5
-};
+typedef enum { BLACK = 0, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE } color_t;
 
 typedef struct {
-  wchar_t  codes[NCODES];
-  uint16_t style;
+    color_t forecolor     : 3;
+    bool    forebright    : 1;
+    color_t backcolor     : 3;
+    bool    backbright    : 1;
+    bool    bold          : 1;
+    bool    dim           : 1;
+    bool    underline     : 1;
+    bool    inverse       : 1;
+    bool    invisible     : 1;
+    bool    strikethrough : 1;
+} style_t;
+
+typedef struct {
+  wchar_t codes[NCODES];
+  style_t style;
 } cell_t;
 
 typedef struct {
-  int       cursorx,
-            cursory;
-  bool      showcursor;
-  int       rows,
-            cols;
-  cell_t   *cells;
+  int     cursorx,
+          cursory;
+  bool    showcursor;
+  int     rows,
+          cols;
+  cell_t *cells;
 } screen_t;
 
-void screen_init (screen_t *fake, screen_t *real);
-void screen_flush(screen_t **fake, screen_t **real);
+void screen_clear(screen_t *screen);
+void screen_init (buffer_t *buf, screen_t *fake, screen_t *real, int rows, int cols);
+void screen_flush(buffer_t *buf, screen_t **fake, screen_t **real);
+void screen_free(screen_t *screen);
 
 #endif

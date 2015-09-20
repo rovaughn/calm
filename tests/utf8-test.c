@@ -51,6 +51,16 @@ int main(void) {
     assertEqBuf("\xf0\xa4\xad\xa2", out, 4, exp, 4);
   }
 
+  {
+      char    out[UTF8_LEN*3],
+              exp[3]          = "hey";
+      wchar_t inp[5]          = {'h', 'e', 'y', '\0', '\x1b'};
+
+      putsutf8(out, inp, sizeof out);
+
+      assertEqBuf("putsutf8", out, 3, exp, 3);
+  }
+
   return 0;
 }
 

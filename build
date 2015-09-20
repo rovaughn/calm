@@ -1,0 +1,20 @@
+#!/bin/mksh -ue
+gcc_opts+=(-Wall -Wextra -Werror -g -Wno-unused-parameter)
+
+for file in *.c
+do
+    memo gcc ${gcc_opts[*]} -c -o ${file%.c}.o $file
+done
+
+valgrind_opts+=(--error-exitcode=1 --quiet --trace-children=yes)
+valgrind_opts+=(--track-origins=yes --leak-check=full)
+
+cd tests
+for file in *.c
+do
+    objects=$(head -n1 $file | cut -d ' ' -f 2-)
+    memo gcc ${gcc_opts[*]} -o ${file%.c}.out $file $objects
+    memo valgrind ${valgrind_opts[*]} ./${file%.c}.out
+done
+cd -
+
