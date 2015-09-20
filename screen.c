@@ -123,13 +123,8 @@ void screen_flush(buffer_t *buf, screen_t **fakeptr, screen_t **realptr) {
                     currenty = y;
                 }
 
-                wchar_t *codes    = fake->cells[i].codes;
-                char     codestr  [NCODES*UTF8_LEN];
-                int      codecols = mk_wcswidth(codes, NCODES),
-                         n        = putsutf8(codestr, fake->cells[i].codes, NCODES);
-
-                buf_push(buf, codestr, n);
-                currentx += codecols;
+                buf_push_utf8(buf, fake->cells[i].codes, NCODES);
+                currentx += mk_wcswidth(fake->cells[i].codes, NCODES);
 
                 if (currentx >= fake->cols) {
                     currentx  = 0;

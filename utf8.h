@@ -6,6 +6,6 @@
 #define UTF8_LEN 6
 
 int pututf8(char *out, wchar_t c);
-size_t putsutf8(char *out, wchar_t *wcs, size_t len);
+size_t putsutf8(char *out, const wchar_t *wcs, size_t len);
 
 #endif
