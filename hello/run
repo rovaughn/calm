@@ -1,7 +1,7 @@
 #!/bin/mksh -ue
 for file in buffer.c screen.c utf8.c wcwidth.c
 do
-    gcc -g -o ${file%.c}.o -c ../$file
+    musl-gcc -O3 -o ${file%.c}.o -c ../$file
 done
-gcc -g main.c *.o
-valgrind ./a.out
+musl-gcc -O3 main.c *.o
+./a.out
