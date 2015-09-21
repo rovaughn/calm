@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <ctype.h>
 #include "../error.h"
 
 #define _ASSERT_RED   "\x1b[31m"
@@ -41,18 +42,39 @@ void assertEq_(const char *message, intptr_t actual, intptr_t expected) {
   }
 }
 
+void showbuf(void *buf, size_t len) {
+    uint8_t *chars = buf;
+
+    size_t i;
+    for (i = 0; i < len; i++) {
+        char c = chars[i];
+
+        if (c == '\\') {
+            fprintf(stderr, "\\");
+        } else if (isprint(c)) {
+            fprintf(stderr, "%c", c);
+        } else if (c == '\x1b') {
+            fprintf(stderr, "\\e");
+        } else if (c == '\n') {
+            fprintf(stderr, "\\n");
+        } else {
+            fprintf(stderr, "\\x%02x", c);
+        }
+    }
+}
+
 void assertEqBuf(const char *message, void *actual, size_t alen, void *expected, size_t elen) {
   if (elen != alen) {
     fprintf(stderr, _ASSERT_RED " " _ASSERT_FAILURE " %s: Expected buf of size %lu, but is %lu\n" _ASSERT_CLEAR, message, elen, alen);
     exit(1);
   } else if (memcmp(actual, expected, alen) != 0) {
-    size_t i;
-
-    fprintf(stderr, _ASSERT_RED " " _ASSERT_FAILURE " %s: Expected " _ASSERT_CLEAR, message);
-    for (i = 0; i < elen; ++i) fprintf(stderr, "%02x", ((uint8_t*)expected)[i]);
-    fprintf(stderr, ", got ");
-    for (i = 0; i < alen; ++i) fprintf(stderr, "%02x", ((uint8_t*)actual)[i]);
+    fprintf(stderr, _ASSERT_RED " " _ASSERT_FAILURE " %s:\n", message);
+    fprintf(stderr, "Expected ");
+    showbuf(expected, elen);
     fprintf(stderr, "\n");
+    fprintf(stderr, "Got      ");
+    showbuf(actual, alen);
+    fprintf(stderr, "\n" _ASSERT_CLEAR);
     exit(1);
   } else {
     fprintf(stderr, _ASSERT_GREEN " " _ASSERT_SUCCESS " %s\n" _ASSERT_CLEAR, message);

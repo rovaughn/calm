@@ -15,11 +15,12 @@ int main(void) {
 
     {
         buffer_t buf = buf_new(1);
-        char exp[] = "onetwothree456five";
+        char exp[] = "onetwo0three456five";
         char str[] = "two";
 
         buf_push_str(&buf, "one");
         buf_push(&buf, str, strlen(str));
+        buf_push_int(&buf, 0);
         buf_push_str(&buf, "three");
         buf_push_int(&buf, 456);
         buf_push_str(&buf, "five");

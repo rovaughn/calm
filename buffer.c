@@ -60,6 +60,11 @@ static unsigned count_digits(unsigned n) {
 }
 
 void buf_push_int(buffer_t *buf, unsigned n) {
+    if (n == 0) {
+        buf_push_str(buf, "0");
+        return;
+    }
+
     unsigned digits = count_digits(n);
     unsigned i = digits - 1;
     uint8_t *dest = buf_reserve(buf, digits);

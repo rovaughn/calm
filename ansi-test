@@ -75,19 +75,17 @@ colors() {
     fi
 }
 
+color256() {
+    echo -n "${csi}38;5;${1}m"
+}
+
+colorrgb() {
+    echo -n "${csi}38;2;${1};${2};${3}m"
+}
+
 say() {
     echo -n "$1"
 }
 
-reset
-clear
-say "hello"
-move_to 2 1
-say "world"
-move_to 1 3
-colors $(fore $green)
-say "?"
-move_to 2 3
-say "!"
-move_to 3 1
+echo "${csi}1;38;2;100;100;100;48;2;200;200;200mhello${csi}0m"
 

@@ -5,6 +5,7 @@
 #include <string.h>
 #include "utf8.h"
 #include "wcwidth.h"
+#include <assert.h>
 
 #define CSI "\x1b["
 
@@ -16,7 +17,7 @@ void fake_screen_init(screen_t *fake, int rows, int cols) {
     fake->cursor.y = 0;
     fake->cursor.visible = false;
     memset(&fake->cursor.style, 0, sizeof fake->cursor.style);
-    fake->cursor.style.forecolor = WHITE;
+    fake->cursor.style.fore.rgb = 0xffffff;
 
     fake->cells = malloc(rows * cols * sizeof *fake->cells);
 
@@ -24,7 +25,7 @@ void fake_screen_init(screen_t *fake, int rows, int cols) {
     int i;
     for (i = 0; i < fake->rows * fake->cols; ++i) {
         fake->cells[i].codes[0] = ' ';
-        fake->cells[i].style.forecolor = WHITE;
+        fake->cells[i].style.fore.rgb = 0xffffff;
     }
 }
 
@@ -33,13 +34,13 @@ void fake_screen_reset(screen_t *fake, int rows, int cols) {
     fake->cursor.y = 0;
     fake->cursor.visible = false;
     memset(&fake->cursor.style, 0, sizeof fake->cursor.style);
-    fake->cursor.style.forecolor = WHITE;
+    fake->cursor.style.fore.rgb = 0xffffff;
 
     memset(fake->cells, 0, fake->rows * fake->cols * sizeof *fake->cells);
     int i;
     for (i = 0; i < fake->rows * fake->cols; ++i) {
         fake->cells[i].codes[0] = ' ';
-        fake->cells[i].style.forecolor = WHITE;
+        fake->cells[i].style.fore.rgb = 0xffffff;
     }
 }
 
@@ -50,7 +51,7 @@ void real_screen_init(buffer_t *buf, screen_t *real, int rows, int cols) {
     real->cursor.y       = 0;
     real->cursor.visible = false;
     memset(&real->cursor.style, 0, sizeof real->cursor.style);
-    real->cursor.style.forecolor = WHITE;
+    real->cursor.style.fore.rgb = 0xffffff;
 
     real->rows = rows;
     real->cols = cols;
@@ -61,7 +62,7 @@ void real_screen_init(buffer_t *buf, screen_t *real, int rows, int cols) {
     int i;
     for (i = 0; i < real->rows * real->cols; i++) {
         real->cells[i].codes[0] = ' ';
-        real->cells[i].style.forecolor = WHITE;
+        real->cells[i].style.fore.rgb = 0xffffff;
     }
 }
 
@@ -114,7 +115,7 @@ static void write_cursor(buffer_t *buf, screen_t *real, wchar_t *codes, size_t n
     }
 }
 
-bool codes_eq(wchar_t *a, wchar_t *b, size_t n) {
+static bool codes_eq(wchar_t *a, wchar_t *b, size_t n) {
     size_t i;
     for (i = 0; i < n; i++) {
         if (a[i] == 0 && b[i] == 0) {
@@ -134,30 +135,36 @@ void update_cell(buffer_t *buf, screen_t *fake, screen_t *real, int x, int y) {
            *r = &real->cells[i];
 
     // SGR = Select Graphic Rendition
-    int sgrs[2] = {0};
-    int sgrn    = 0;
+    unsigned sgrs[10] = {0};
+    unsigned sgrn     = 0;
 
-    bool foreDiffersReal   = f->style.forebright != r->style.forebright ||
-                             f->style.forecolor  != r->style.forecolor,
-         backDiffersReal   = f->style.backbright != r->style.backbright ||
-                             f->style.backcolor  != r->style.backcolor,
-         foreDiffersCursor = f->style.forebright != real->cursor.style.forebright ||
-                             f->style.forecolor  != real->cursor.style.forecolor,
-         backDiffersCursor = f->style.backbright != real->cursor.style.backbright ||
-                             f->style.backcolor  != real->cursor.style.backcolor,
+    bool foreDiffersReal   = f->style.fore.rgb != r->style.fore.rgb,
+         backDiffersReal   = f->style.back.rgb != r->style.back.rgb,
+         foreDiffersCursor = f->style.fore.rgb != real->cursor.style.fore.rgb,
+         backDiffersCursor = f->style.back.rgb != real->cursor.style.back.rgb,
          textDiffers       = !codes_eq(f->codes, r->codes, NCODES);
 
     if ((foreDiffersReal || textDiffers) && foreDiffersCursor) {
-        real->cursor.style.forebright = f->style.forebright;
-        real->cursor.style.forecolor  = f->style.forecolor;
-        sgrs[sgrn++] = (f->style.forebright? 90 : 30) + f->style.forecolor;
+        real->cursor.style.fore = f->style.fore;
+
+        sgrs[sgrn++] = 38;
+        sgrs[sgrn++] = 2;
+        sgrs[sgrn++] = f->style.fore.r;
+        sgrs[sgrn++] = f->style.fore.g;
+        sgrs[sgrn++] = f->style.fore.b;
     }
 
     if ((backDiffersReal || textDiffers) && backDiffersCursor) {
-        real->cursor.style.backbright = f->style.backbright;
-        real->cursor.style.backcolor  = f->style.backcolor;
-        sgrs[sgrn++] = (f->style.backbright? 100 : 40) + f->style.backcolor;
+        real->cursor.style.back = f->style.back;
+
+        sgrs[sgrn++] = 48;
+        sgrs[sgrn++] = 2;
+        sgrs[sgrn++] = f->style.back.r;
+        sgrs[sgrn++] = f->style.back.g;
+        sgrs[sgrn++] = f->style.back.b;
     }
+
+    assert(sgrn <= sizeof sgrs/sizeof *sgrs);
 
     if (sgrn > 0) {
         move_cursor(buf, real, x, y);
@@ -165,7 +172,7 @@ void update_cell(buffer_t *buf, screen_t *fake, screen_t *real, int x, int y) {
         buf_push_str(buf, CSI);
         buf_push_int(buf, sgrs[0]);
 
-        int i;
+        unsigned i;
         for (i = 1; i < sgrn; i++) {
             buf_push_str(buf, ";");
             buf_push_int(buf, sgrs[i]);

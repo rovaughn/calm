@@ -8,10 +8,10 @@ const char *checkCleared(screen_t *screen) {
         return "Expected cursor.x = 0";
     } else if (screen->cursor.y != 0) {
         return "Expected cursor.y = 0";
-    } else if (screen->cursor.style.forecolor != WHITE) {
-        return "Expected cursor.style.forecolor = WHITE";
-    } else if (screen->cursor.style.backcolor != BLACK) {
-        return "Expected cursor.style.backcolor = BALCK";
+    } else if (screen->cursor.style.fore.rgb != 0xffffff) {
+        return "Expected cursor.style.fore.n = WHITE";
+    } else if (screen->cursor.style.back.rgb != 0x000000) {
+        return "Expected cursor.style.back.n = BALCK";
     }
 
     int i;
@@ -20,33 +20,14 @@ const char *checkCleared(screen_t *screen) {
 
         if (cell.codes[0] != ' ') {
             return "Expected space";
-        } else if (cell.style.forecolor != WHITE) {
+        } else if (cell.style.fore.rgb != 0xffffff) {
             return "Expected white foreground";
-        } else if (cell.style.backcolor != BLACK) {
+        } else if (cell.style.back.rgb != 0x000000) {
             return "Expected black background";
         }
     }
 
     return NULL;
-}
-
-void show(buffer_t buf) {
-    size_t i;
-    for (i = 0; i < buf.used; i++) {
-        char c = buf.data[i];
-
-        if (c == '\\') {
-            printf("\\");
-        } else if (isprint(c)) {
-            printf("%c", buf.data[i]);
-        } else if (c == '\x1b') {
-            printf("\\e");
-        } else {
-            printf("\\x%02x", c);
-        }
-    }
-
-    printf("\n");
 }
 
 int main(void) {
@@ -110,7 +91,7 @@ int main(void) {
         fake_screen_reset(&fake, rows, cols);
 
         fake.cells[0].codes[0] = 'h';
-        fake.cells[0].style.forecolor = BLUE;
+        fake.cells[0].style.fore.rgb = 0x00ffff;
         fake.cells[1].codes[0] = 'e';
         fake.cells[2].codes[0] = 'l';
         fake.cells[3].codes[0] = 'l';
@@ -118,13 +99,15 @@ int main(void) {
 
         fake.cells[fake.cols+0].codes[0] = 'W';
         fake.cells[fake.cols+1].codes[0] = 'o';
-        fake.cells[fake.cols+1].style.forecolor = RED;
-        fake.cells[fake.cols+1].style.backcolor = GREEN;
+        fake.cells[fake.cols+1].style.fore.rgb = 0xff0000;
+        fake.cells[fake.cols+1].style.back.rgb = 0xaabbcc;
         fake.cells[fake.cols+2].codes[0] = 'r';
         fake.cells[fake.cols+3].codes[0] = 'l';
         fake.cells[fake.cols+4].codes[0] = 'd';
 
-        char exp[] = "\e[1;1H\e[34mh\e[2;1H\e[37mW\e[31;42mo";
+        // TODO: A lot of common colors (e.g. black, white) could be optimized
+        //       using normal standard colors, or 256 colors.
+        char exp[] = "\e[1;1H\e[38;2;0;255;255mh\e[2;1H\e[38;2;255;255;255mW\e[38;2;255;0;0;48;2;170;187;204mo";
 
         buf.used = 0;
         screen_flush(&buf, &fake, &real);

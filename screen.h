@@ -7,13 +7,20 @@
 
 #define NCODES 2
 
-typedef enum { BLACK = 0, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE } color_t;
+typedef enum { BLACK = 0, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE } stdcolor_t;
+
+typedef union {
+    unsigned rgb : 24;
+    struct {
+    uint8_t  b : 8,
+             g : 8,
+             r : 8;
+    };
+} color_t;
 
 typedef struct {
-    color_t forecolor     : 3;
-    bool    forebright    : 1;
-    color_t backcolor     : 3;
-    bool    backbright    : 1;
+    color_t fore;
+    color_t back;
     bool    bold          : 1;
     bool    dim           : 1;
     bool    underline     : 1;
