@@ -4,6 +4,16 @@
 #include <ctype.h>
 
 const char *checkCleared(screen_t *screen) {
+    if (screen->cursor.x != 0) {
+        return "Expected cursor.x = 0";
+    } else if (screen->cursor.y != 0) {
+        return "Expected cursor.y = 0";
+    } else if (screen->cursor.style.forecolor != WHITE) {
+        return "Expected cursor.style.forecolor = WHITE";
+    } else if (screen->cursor.style.backcolor != BLACK) {
+        return "Expected cursor.style.backcolor = BALCK";
+    }
+
     int i;
     for (i = 0; i < screen->rows * screen->cols; i++) {
         cell_t cell = screen->cells[i];
@@ -32,7 +42,7 @@ void show(buffer_t buf) {
         } else if (c == '\x1b') {
             printf("\\e");
         } else {
-            printf("\\x%02x ", c);
+            printf("\\x%02x", c);
         }
     }
 
@@ -40,52 +50,53 @@ void show(buffer_t buf) {
 }
 
 int main(void) {
+    int rows = 25, cols = 80;
     buffer_t buf = buf_new(1);
-    screen_t screen1, screen2;
-    screen_t *fake = &screen1,
-             *real = &screen2;
+    screen_t fake, real;
 
     {
-        char exp[] = "\e[H\e[2J";
+        fake_screen_init(&fake, rows, cols);
 
-        buf.used = 0;
-        screen_init(&buf, fake, real, 25, 80);
+        assertError("fake_screen_init clears fake", checkCleared(&fake));
+        assertEq("fake->rows", fake.rows, 25);
+        assertEq("fake->cols", fake.cols, 80);
+    }
 
-        assertEqBuf("Init clears screen", buf.data, buf.used, exp, strlen(exp));
+    {
+        char exp[] = "\e[H\e[2J\e[0m\e[?25l";
 
-        assertEq("fake->rows", fake->rows, 25);
-        assertEq("fake->cols", fake->cols, 80);
-        assertEq("real->rows", real->rows, 25);
-        assertEq("real->cols", real->cols, 80);
-        
-        assertEq("fake->cursorx", fake->cursorx, 0);
-        assertEq("fake->cursory", fake->cursory, 0);
-        assertEq("fake->showcursor", fake->showcursor, false);
+        real_screen_init(&buf, &real, rows, cols);
 
-        assertError("fake is cleared", checkCleared(fake));
-        assertError("real is cleared", checkCleared(real));
+        assertEqBuf("real_screen_init clears screen", buf.data, buf.used, exp, strlen(exp));
+        assertEq("real->rows", real.rows, 25);
+        assertEq("real->cols", real.cols, 80);
+        assertError("real is cleared", checkCleared(&real));
     }
 
     {
         char exp[] = "";
 
+        fake_screen_reset(&fake, rows, cols);
         buf.used = 0;
         screen_flush(&buf, &fake, &real);
+
         assertEqBuf("Nothing", buf.data, buf.used, exp, strlen(exp));
     }
 
     {
-        fake->cells[0].codes[0] = 'h';
-        fake->cells[1].codes[0] = 'e';
-        fake->cells[2].codes[0] = 'l';
-        fake->cells[3].codes[0] = 'l';
-        fake->cells[4].codes[0] = 'o';
+        fake_screen_reset(&fake, rows, cols);
 
-        fake->cells[fake->cols+0].codes[0] = 'w';
-        fake->cells[fake->cols+1].codes[0] = 'o';
-        fake->cells[fake->cols+2].codes[0] = 'r';
-        fake->cells[fake->cols+3].codes[0] = 'l';
-        fake->cells[fake->cols+4].codes[0] = 'd';
+        fake.cells[0].codes[0] = 'h';
+        fake.cells[1].codes[0] = 'e';
+        fake.cells[2].codes[0] = 'l';
+        fake.cells[3].codes[0] = 'l';
+        fake.cells[4].codes[0] = 'o';
+
+        fake.cells[fake.cols+0].codes[0] = 'w';
+        fake.cells[fake.cols+1].codes[0] = 'o';
+        fake.cells[fake.cols+2].codes[0] = 'r';
+        fake.cells[fake.cols+3].codes[0] = 'l';
+        fake.cells[fake.cols+4].codes[0] = 'd';
 
         char exp[] = "hello\e[2;1Hworld";
 
@@ -96,34 +107,34 @@ int main(void) {
     }
 
     {
-        fake->cells[0].codes[0] = 'h';
-        fake->cells[0].style.forecolor = BLUE;
-        fake->cells[1].codes[0] = 'e';
-        fake->cells[2].codes[0] = 'l';
-        fake->cells[3].codes[0] = 'l';
-        fake->cells[4].codes[0] = 'o';
+        fake_screen_reset(&fake, rows, cols);
 
-        fake->cells[fake->cols+0].codes[0] = 'w';
-        fake->cells[fake->cols+1].codes[0] = 'o';
-        fake->cells[fake->cols+1].style.forecolor = RED;
-        fake->cells[fake->cols+1].style.backcolor = GREEN;
-        fake->cells[fake->cols+2].codes[0] = 'r';
-        fake->cells[fake->cols+3].codes[0] = 'l';
-        fake->cells[fake->cols+4].codes[0] = 'd';
+        fake.cells[0].codes[0] = 'h';
+        fake.cells[0].style.forecolor = BLUE;
+        fake.cells[1].codes[0] = 'e';
+        fake.cells[2].codes[0] = 'l';
+        fake.cells[3].codes[0] = 'l';
+        fake.cells[4].codes[0] = 'o';
 
-        // TODO: It'd be better if this were "\e[34m\e[2;2H\e[31;47m"
-        char exp[] = "\e[34m\e[2;2H\e[31m\e[41m";
+        fake.cells[fake.cols+0].codes[0] = 'W';
+        fake.cells[fake.cols+1].codes[0] = 'o';
+        fake.cells[fake.cols+1].style.forecolor = RED;
+        fake.cells[fake.cols+1].style.backcolor = GREEN;
+        fake.cells[fake.cols+2].codes[0] = 'r';
+        fake.cells[fake.cols+3].codes[0] = 'l';
+        fake.cells[fake.cols+4].codes[0] = 'd';
+
+        char exp[] = "\e[1;1H\e[34mh\e[2;1H\e[37mW\e[31;42mo";
 
         buf.used = 0;
         screen_flush(&buf, &fake, &real);
-        show(buf);
 
         assertEqBuf("Adds colors", buf.data, buf.used, exp, strlen(exp));
     }
 
     buf_free(&buf);
-    screen_free(&screen1);
-    screen_free(&screen2);
+    screen_free(&fake);
+    screen_free(&real);
 
     return 0;
 }

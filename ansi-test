@@ -1,0 +1,93 @@
+#!/bin/mksh -ue
+
+csi="\x1b["
+reset=0
+bold=1
+faint=2
+italic=3
+underline=4
+blink_slow=5
+blink_fast=6
+negative=7
+conceal=8
+strikethrough=9
+primary=10
+
+alternate_font() {
+    echo -n $(($1 + 10))
+}
+
+fraktur=20
+nobold=21
+normal=22
+no_italic=23
+no_underline=24
+no_blink=25
+positive=27
+no_conceal=28
+framed=51
+encircled=52
+overlined=53
+no_framed=54
+no_overline=55
+
+black=0
+red=1
+green=2
+yellow=3
+blue=4
+magenta=5
+cyan=6
+white=7
+
+fore() {
+    echo -n $(($1 + 30))
+}
+
+back() {
+    echo -n $(($1 + 40))
+}
+
+move_to() {
+    echo -n "${csi}${1};${2}H"
+}
+
+hide_cursor() {
+    echo -n "${csi}?25l"
+}
+
+show_cursor() {
+    echo -n "${csi}?25h"
+}
+
+colors() {
+    if [ $# = 0 ]
+    then
+        echo -n "${csi}0m"
+    elif [ $# = 1 ]
+    then
+        echo -n "${csi}${1}m"
+    else
+        echo -n "${csi}${1}"
+        shift
+        printf ";%s" $@
+        echo -n "m"
+    fi
+}
+
+say() {
+    echo -n "$1"
+}
+
+reset
+clear
+say "hello"
+move_to 2 1
+say "world"
+move_to 1 3
+colors $(fore $green)
+say "?"
+move_to 2 3
+say "!"
+move_to 3 1
+

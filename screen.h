@@ -28,17 +28,24 @@ typedef struct {
 } cell_t;
 
 typedef struct {
-  int     cursorx,
-          cursory;
-  bool    showcursor;
-  int     rows,
-          cols;
-  cell_t *cells;
+    int     x, y;
+    bool    visible;
+    style_t style;
+} cursor_t;
+
+typedef struct {
+  int       rows,
+            cols;
+  cell_t   *cells;
+  cursor_t  cursor;
 } screen_t;
 
-void screen_clear(screen_t *screen);
-void screen_init (buffer_t *buf, screen_t *fake, screen_t *real, int rows, int cols);
-void screen_flush(buffer_t *buf, screen_t **fake, screen_t **real);
+void fake_screen_init(screen_t *fake, int rows, int cols);
+void fake_screen_reset(screen_t *fake, int rows, int cols);
+void real_screen_init(buffer_t *buf, screen_t *real, int rows, int cols);
+int read_dimensions(int *rows, int *cols);
+
+void screen_flush(buffer_t *buf, screen_t *fake, screen_t *real);
 void screen_free(screen_t *screen);
 
 #endif
