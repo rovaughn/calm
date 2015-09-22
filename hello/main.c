@@ -18,7 +18,7 @@ int main(void) {
 
     int i = 0;
     while (i < 50) {
-        int start = 25*80/2;
+        int start = rows*cols/2;
         fake.cells[start+0].codes[0] = 'H';
         fake.cells[start+1].codes[0] = 'E';
         fake.cells[start+2].codes[0] = 'L';

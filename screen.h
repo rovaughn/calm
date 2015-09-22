@@ -50,6 +50,7 @@ typedef struct {
 void fake_screen_init(screen_t *fake, int rows, int cols);
 void fake_screen_reset(screen_t *fake, int rows, int cols);
 void real_screen_init(buffer_t *buf, screen_t *real, int rows, int cols);
+void real_screen_cleanup(buffer_t *buf, screen_t *real);
 int read_dimensions(int *rows, int *cols);
 
 void screen_flush(buffer_t *buf, screen_t *fake, screen_t *real);
